@@ -1,3 +1,5 @@
+import copy
+
 import pandas as pd
 import numpy as np
 import random
@@ -74,16 +76,16 @@ def elo_bec():
     # fixed_expected_result_matrix = [[3,2,2,-2]]
 
 
-    # fixed_wages_matrix_1 = [[0.5, 0.25, 1, 0],[0, 0.25, 0, 1]]
-    # fixed_wages_matrix_2 = [[0.25,0.5,1]]
-    #
-    # fixed_data_matrix = np.array([[1,2,0],[2,0,0],[1,-1,2],[1,-2,-1]], dtype='float32')
-    # fixed_expected_result_matrix = np.array([[3],[2],[2],[-2]], dtype='float32')
+    fixed_wages_matrix_1 = [[0.5, 0.25, 1, 0],[0, 0.25, 0, 1]]
+    fixed_wages_matrix_2 = [[0.25,0.5,1]]
 
-    fixed_wages_matrix_1 = [[0.5, 0.25, 1, 0], [0, 0.25, 0, 1]]
-    fixed_wages_matrix_2 = [[0.25, 0.5, 1]]
-    fixed_data_matrix = np.array([[1, 2, 0]], dtype='float32')
-    fixed_expected_result_matrix = np.array([[3]], dtype='float32')
+    fixed_data_matrix = np.array([[1,2,0],[2,0,0],[1,-1,2],[1,-2,-1]], dtype='float32')
+    fixed_expected_result_matrix = np.array([[3],[2],[2],[-2]], dtype='float32')
+
+    # fixed_wages_matrix_1 = [[0.5, 0.25, 1, 0], [0, 0.25, 0, 1]]
+    # fixed_wages_matrix_2 = [[0.25, 0.5, 1]]
+    # fixed_data_matrix = np.array([[1, 2, 0]], dtype='float32')
+    # fixed_expected_result_matrix = np.array([[3]], dtype='float32')
 
     # fixed_wages_matrix_1 = [[0.5,0],[0.25,0.25],[1,0],[0,1]]
     # fixed_wages_matrix_2 = [[0.25],[0.5],[1]]
@@ -219,8 +221,8 @@ def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_e
     # print("liczba neuronow warwtwa 1:",len(matrix_wages_1_layer))
     # print()
 
-    matrix_deltas_1_layer = matrix_wages_1_layer
-    matrix_deltas_2_layer = matrix_wages_2_layer
+    matrix_deltas_1_layer = copy.deepcopy(matrix_wages_1_layer)
+    matrix_deltas_2_layer = copy.deepcopy(matrix_wages_2_layer)
     result_bias = 0
     result = 0
 
@@ -269,7 +271,7 @@ def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_e
     # print("delty warstwa ukryta:")
     # for i in range(0, len(matrix_wages_1_layer)):
     #     print(matrix_wages_1_layer[i])
-    #
+
     # print()
     # print("delty warstwa wyjsciowa(before bias):")
     # for i in range(0, 3):
@@ -325,6 +327,7 @@ def liczenie_dija(matrix_deltas_1_layer, matrix_deltas_2_layer, data_matrix): # 
 
     return matrix_dij_1_layer, matrix_dij_2_layer
 
+# TODO: W TEJ FKCJI JEST BLAD (NOWE WAGI SA GENEROWANE NIEPOPRAWNIE)
 def gradient_descent(matrix_old_wages_1_layer, matrix_old_wages_2_layer, matrix_dij_1_layer, matrix_dij_2_layer, alfa):
     # liczymy nowe wagi, ktorymi zastapimy stare wagi przy nastepnej iteracji
     # (nowa waga) = (stara waga) - (alfa) * (odpowiedni dij z fkcji liczenie_dija)
@@ -332,17 +335,18 @@ def gradient_descent(matrix_old_wages_1_layer, matrix_old_wages_2_layer, matrix_
     matrix_new_wages_2_layer = matrix_old_wages_2_layer
     for i in range (0, len(matrix_old_wages_1_layer[0])):  # wiersze
         for j in range (0, len(matrix_old_wages_1_layer)):     # kolumny
-            matrix_new_wages_1_layer[j][i] = matrix_old_wages_1_layer[j][i] - alfa * matrix_dij_1_layer[j][i]
+            matrix_new_wages_1_layer[j][i] = matrix_old_wages_1_layer[j][i] - (alfa * matrix_dij_1_layer[j][i])
     for i in range (0, len(matrix_old_wages_2_layer[0])):  # wiersze
         for j in range (0, len(matrix_old_wages_2_layer)):     # kolumny
-            matrix_new_wages_2_layer[j][i] = matrix_old_wages_2_layer[j][i] - alfa * matrix_dij_2_layer[j][i]
+            matrix_new_wages_2_layer[j][i] = matrix_old_wages_2_layer[j][i] - (alfa * matrix_dij_2_layer[j][i])
+
 
     # print("nowe wagi warstwa ukryta:")
-    # for i in range(0, 2):
+    # for i in range(0, len(matrix_new_wages_1_layer)):
     #     print(matrix_new_wages_1_layer[i])
     # print()
     # print("nowe wagi warstwa wyjsciowa:")
-    # for i in range(0, 3):
+    # for i in range(0, len(matrix_new_wages_2_layer)):
     #     print(matrix_new_wages_2_layer[i])
 
     return matrix_new_wages_1_layer, matrix_new_wages_2_layer
@@ -383,6 +387,8 @@ def mean_square_error(matrix_of_outcomes, expected_result_matrix, nr_of_neurons_
     for i in range (0, len(matrix_of_outcomes[0])): # to sie dzieje dla kazdej kolumny (kazdego przykladu)
         for j in range (nr_of_neurons_layer_1, len(matrix_of_outcomes)): # to sie dzieje dla kazdego wiersza (neuronu z warstwy wyjsciowej)
             result += (expected_result_matrix[i][j - nr_of_neurons_layer_1] - matrix_of_outcomes[j][i]) ** 2
+            print()
+            print("co ma wyjsc vs co jest:")
             print(expected_result_matrix[i][j - nr_of_neurons_layer_1], matrix_of_outcomes[j][i])
     result = result / len(matrix_of_outcomes[0])
     print()
@@ -403,15 +409,15 @@ def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer,
     # for i in range(0, 3):
     #     print(matrix_wages_2_layer[i])
 
-    alfa = 0.1
+    alfa = 0.5
 
     normalized_data_matrix, expected_result_matrix, matrix_wages_1_layer, matrix_wages_2_layer = elo_bec()  # to wybombic jak sie przestane bawic
     normalized_data_matrix = change_input_to_0_1_values(normalized_data_matrix)
     expected_result_matrix = change_input_to_0_1_values(expected_result_matrix)
-    print()
-    print("normalized_data_matrix:")
-    for i in range(0, len(normalized_data_matrix)):
-        print(normalized_data_matrix[i])
+    # print()
+    # print("normalized_data_matrix:")
+    # for i in range(0, len(normalized_data_matrix)):
+    #     print(normalized_data_matrix[i])
 
 
     matrix_new_wages_1_layer = matrix_wages_1_layer
@@ -434,10 +440,10 @@ def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer,
         mean_square_error(matrix_of_sigmoid_values, expected_result_matrix, len(matrix_wages_1_layer))
 
     matrix_of_sigmoid_values = change_0_1_values_back_to_normal(data_matrix, matrix_of_sigmoid_values)
-    print()
-    print("sigmoid_values for every neuron:")
-    for i in range(0, len(matrix_of_sigmoid_values)):
-        print(matrix_of_sigmoid_values[i])
+    # print()
+    # print("sigmoid_values for every neuron:")
+    # for i in range(0, len(matrix_of_sigmoid_values)):
+    #     print(matrix_of_sigmoid_values[i])
 
 
 # def testing:
