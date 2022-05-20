@@ -36,10 +36,13 @@ def change_input_to_0_1_values(data_matrix):
 
     return normalized_data_matrix
 
-def generate_wages(matrix_x, matrix_y):
+def generate_wages(matrix_x, matrix_y, is_bias):
     # generujemy losowo wagi z przedzialu [-1; 1] "Wagi sieci, o ile nie jest ona wczytywana z pliku, mają być inicjalizowane w sposób pseudolosowy"
     w = matrix_y
-    h = matrix_x + 1 # bo jeszcze waga biasu
+    if (is_bias):
+        h = matrix_x + 1 # bo jeszcze waga biasu
+    else:
+        h = matrix_x
     matrix_wages = [[0 for x in range(h)] for y in range(w)]
     for i in range(w):
         for j in range (h):
@@ -93,17 +96,20 @@ def elo_bec():
     return fixed_data_matrix, fixed_expected_result_matrix, fixed_wages_matrix_1, fixed_wages_matrix_2
 
 
-def sum(wages_matrix, data_row, bias):    # data_row to jeden rzad z data, bo chce jeden przyklad, wszystkie cechy; wages_matrix to wagi dla danego nauronu
+def sum(wages_matrix, data_row, is_bias):    # data_row to jeden rzad z data, bo chce jeden przyklad, wszystkie cechy; wages_matrix to wagi dla danego nauronu
     # suma, pierwszy etap w kazdym neuronie; zwraca sume dla danego wezla i danego przykladu
     # rownie dobrze mozna wymnozyc macierze
     # wages_matrix to jednowymiarowka na ktorej sa wagi dla kolejnych cech (i biasu tez)
 
     # to dziala dla liczby neuronow w warstwie ukrytej od 2 do 4: -------------------------------
     result = 0
-    if (bias):
+    if (is_bias):
         result += 1 * wages_matrix[0]   # to jest wporzadku
-    for i in range (0, len(wages_matrix) - 1):   # '-1' bo juz ogarnelismy bias wyzej jesli jest
-        result += data_row[i] * wages_matrix[i + 1] # data row to wszystkie cechy dla danego przykladu
+        for i in range (0, len(wages_matrix) - 1):   # '-1' bo juz ogarnelismy bias wyzej jesli jest
+            result += data_row[i] * wages_matrix[i + 1] # data row to wszystkie cechy dla danego przykladu
+    else:
+        for i in range(0, len(wages_matrix)):
+            result += data_row[i] * wages_matrix[i]  # data row to wszystkie cechy dla danego przykladu
     return result
     # --------------------------------------------------------------------------------------------
     # result = 0
@@ -119,7 +125,7 @@ def sigmoid_function(x):
     # funkcja sigmoidalna, drugi etap w kazdym neuronie
     return 1 / (1 + math.exp(-x))
 
-def count_neuron(data_matrix, matrix_wages_1_layer, matrix_wages_2_layer):
+def count_neuron(data_matrix, matrix_wages_1_layer, matrix_wages_2_layer, is_bias):
     # funkcja liczaca sume i funkcje sigmoidalna w danym neuronie
     # zaleznie od danych wejsciowych (wszystkie cechy z danego przykladu i wagi)
     w = len(matrix_wages_1_layer) + len(matrix_wages_2_layer)  # liczba neuronow wszystkich
@@ -134,9 +140,9 @@ def count_neuron(data_matrix, matrix_wages_1_layer, matrix_wages_2_layer):
 
     for j in range(0, len(matrix_wages_1_layer)):  # sie dzieje dla wszystkich neuronow w wastwie ukrytej
         for i in range(0, len(data_matrix)):  # sie dzieje dla wszystkich przykladow
-            result = sum(matrix_wages_1_layer[j], data_matrix[i], True)  # bo wagi sa takie same dla wszystkich przykladow, data_matrix[i] to jeden przyklad (wszystkie cechy)
+            result = sum(matrix_wages_1_layer[j], data_matrix[i], is_bias)  # bo wagi sa takie same dla wszystkich przykladow, data_matrix[i] to jeden przyklad (wszystkie cechy)
             matrix_of_sums[j][i] = result
-            matrix_of_sigmoid_values[j][i] = sigmoid_function(result)  # to trzeba dodawac na jakis matrix
+            matrix_of_sigmoid_values[j][i] = sigmoid_function(result)
 
     # stworzyc macierz z naodwrot wierszami i kolumnami dla matrix_of_sigmoid_values
     hlp_matrix = [[0 for x in range (len(matrix_of_sigmoid_values))] for y in range (len(matrix_of_sigmoid_values[0]))]
@@ -149,7 +155,7 @@ def count_neuron(data_matrix, matrix_wages_1_layer, matrix_wages_2_layer):
     for j in range(0, len(matrix_wages_2_layer)):  # sie dzieje dla wszystkich neuronow w wastwie wyjsciowej
         for i in range(0, len(data_matrix)):  # sie dzieje dla wszystkich przykladow
             # result = sum(matrix_wages_2_layer[j], data_matrix[i], True)
-            result = sum(matrix_wages_2_layer[j], hlp_matrix[i], True)
+            result = sum(matrix_wages_2_layer[j], hlp_matrix[i], is_bias)
             matrix_of_sums[j + len(matrix_wages_1_layer)][i] = result
             matrix_of_sigmoid_values[j + len(matrix_wages_1_layer)][i] = sigmoid_function(result)
 
@@ -165,7 +171,7 @@ def count_neuron(data_matrix, matrix_wages_1_layer, matrix_wages_2_layer):
 
     return matrix_of_sums, matrix_of_sigmoid_values
 
-def error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums):    # jesli cos nie dziala to stopro w tej funkcji w linear_combination uwu
+def error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums, is_bias):    # jesli cos nie dziala to stopro w tej funkcji w linear_combination uwu
     # funkcja liczacza blad na danym neuronie (wynik z danej iteracji na danym neuronie - to co mialo wyjsc (z danych))
     w = len(matrix_of_sigmoid_values)  # liczba neuronow wszystkich
     h = len(matrix_of_sigmoid_values[0])  # liczba przykladow
@@ -178,7 +184,10 @@ def error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer
     #     print(expected_result_matrix[i])
     # print(expected_result_matrix[0][0])
     matrix_of_errors = [[0 for x in range(h)] for y in range(w)]
-    tmp = 1 # zaczynamy od 1 bo dla 0 bylaby waga biasu
+    if (is_bias):
+        tmp = 1 # zaczynamy od 1 bo dla 0 bylaby waga biasu
+    else:
+        tmp = 0
     tmp2 = 0
 
     # print("matrix_wages_1_layer:")
@@ -200,7 +209,10 @@ def error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer
         linear_combination = 0
         for t in range(0, len(matrix_wages_2_layer)):   # dla kazdego neuornu w warstwie wyjsciowej
             for i in range(0, h):  # sie dzieje dla wszystkich przykladow
-                linear_combination = matrix_wages_2_layer[t][j + 1] * matrix_of_errors[len(matrix_wages_1_layer) + t][i]
+                if (is_bias):
+                    linear_combination = matrix_wages_2_layer[t][j + 1] * matrix_of_errors[len(matrix_wages_1_layer) + t][i]
+                else:
+                    linear_combination = matrix_wages_2_layer[t][j] * matrix_of_errors[len(matrix_wages_1_layer) + t][i]
                 matrix_of_errors[j][i] = linear_combination * matrix_of_sigmoid_values[j][i] * (1 - matrix_of_sigmoid_values[j][i])
 
 
@@ -210,7 +222,7 @@ def error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer
 
     return matrix_of_errors
 
-def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_errors, data_matrix, matrix_of_sigmoid_values): # todo: jak to nazwac??
+def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_errors, data_matrix, matrix_of_sigmoid_values, is_bias): # todo: jak to nazwac??
     # tworzenie macierzy takich samych jak macierze z wagami, ktore byly wczesniej
     # i zastepowanie wartosci tych wag wynikami odpowiednich rownan:
     # (wartosc danego x (rowniez biasu)) * (odpowiadajacy blad na neuronie) + to samo tyle razy ile jest x (czyli przykladow)
@@ -232,16 +244,17 @@ def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_e
         for i in range(0, len(hlp_matrix[0])):
             hlp_matrix[j][i] = matrix_of_sigmoid_values[i][j]
 
-    # print("delty warstwa ukryta(before bias):")
-    # for i in range(0, 2):
-    #     print(matrix_wages_1_layer[i])
-    # print()
-    for j in range (0, len(matrix_wages_1_layer)):  # liczba neuronow w warwtie ukrytej
-        result_bias = 0
-        for i in range (0, len(data_matrix)):   # (wykona sie tyle razy ile jest przykladow)
-            result_bias += 1 * matrix_of_errors[j][i]
-            # print("matrix_of_errors[j][i]",matrix_of_errors[j][i])
-        matrix_deltas_1_layer[j][0] = result_bias    # delta dla biasu na warstwie 1
+    if (is_bias):
+        # print("delty warstwa ukryta(before bias):")
+        # for i in range(0, 2):
+        #     print(matrix_wages_1_layer[i])
+        # print()
+        for j in range (0, len(matrix_wages_1_layer)):  # liczba neuronow w warwtie ukrytej
+            result_bias = 0
+            for i in range (0, len(data_matrix)):   # (wykona sie tyle razy ile jest przykladow)
+                result_bias += 1 * matrix_of_errors[j][i]
+                # print("matrix_of_errors[j][i]",matrix_of_errors[j][i])
+            matrix_deltas_1_layer[j][0] = result_bias    # delta dla biasu na warstwie 1
 
     # print("data_matrix:")
     # for i in range(0, len(data_matrix)):
@@ -255,16 +268,21 @@ def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_e
         for k in range(0, len(data_matrix[0])):  # dla kazdej cechy
             for i in range(0, len(data_matrix)):  # dla kaxdego przykladu
                 result += data_matrix[i][k] * matrix_of_errors[j][i]   # matrix_of_errors[i][j] ma mi wziac kazdy przyklad pokolei dla danego neuronu
-            matrix_deltas_1_layer[j][k + 1] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k + 1
+            if (is_bias):
+                matrix_deltas_1_layer[j][k + 1] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k + 1
+            else:
+                matrix_deltas_1_layer[j][k] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k
             result = 0
-
-    for j in range(0, len(matrix_wages_1_layer)):  # dla kazdego neuronu
-        for k in range(0, len(data_matrix[0])):  # dla kazdej cechy
-            for i in range(0, len(data_matrix)): # dla kaxdego przykladu
-                result += data_matrix[i][k] * matrix_of_errors[j][
-                    i]  # matrix_of_errors[i][j] ma mi wziac kazdy przyklad pokolei dla danego neuronu
-            matrix_deltas_1_layer[j][k + 1] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k + 1
-            result = 0
+    #todo: dlaczego ten fragment kodu byl dwa razy?
+    # for j in range(0, len(matrix_wages_1_layer)):  # dla kazdego neuronu
+    #     for k in range(0, len(data_matrix[0])):  # dla kazdej cechy
+    #         for i in range(0, len(data_matrix)): # dla kaxdego przykladu
+    #             result += data_matrix[i][k] * matrix_of_errors[j][i]  # matrix_of_errors[i][j] ma mi wziac kazdy przyklad pokolei dla danego neuronu
+    #         if (is_bias):
+    #             matrix_deltas_1_layer[j][k + 1] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k + 1
+    #         else:
+    #             matrix_deltas_1_layer[j][k] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k
+    #         result = 0
 
 
     # print()
@@ -276,12 +294,13 @@ def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_e
     # print("delty warstwa wyjsciowa(before bias):")
     # for i in range(0, 3):
     #     print(matrix_wages_2_layer[i])
-    result_bias = 0
     result = 0
-    for j in range(0, len(matrix_wages_2_layer)):
-        for i in range(0, len(data_matrix)):  # (wykona sie tyle razy ile jest przykladow)
-            result_bias += 1 * matrix_of_errors[j + len(matrix_wages_1_layer)][i]   # tu trzeba zmienic indeksy
-        matrix_deltas_2_layer[j][0] = result_bias  # delta dla biasu na warstwie 2
+    if (is_bias):
+        result_bias = 0
+        for j in range(0, len(matrix_wages_2_layer)):
+            for i in range(0, len(data_matrix)):  # (wykona sie tyle razy ile jest przykladow)
+                result_bias += 1 * matrix_of_errors[j + len(matrix_wages_1_layer)][i]   # tu trzeba zmienic indeksy
+            matrix_deltas_2_layer[j][0] = result_bias  # delta dla biasu na warstwie 2
 
     # print()
     # print("delty warstwa wyjsciowa (after bias):")
@@ -290,10 +309,13 @@ def liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_e
     # dla wszystkich nauronow na warstwie wyjsciowej i dla wszystkich przypadkow wszytskich cech liczymy delty:
     # print("len(matrix_wages_2_layer)",len(hlp_matrix))
     for j in range (0, len(matrix_wages_2_layer)):  # dla kazdego neuronu warwty wyjsciowej
-        for k in range(0, len(matrix_wages_1_layer)):  # dla kazdej cechy NIEPRAWDA BO DLA LICZBY NEURONOW NA WARSTWIE 1 (bias dodaje pozniej)
+        for k in range(0, len(matrix_wages_1_layer)):  #DLA LICZBY NEURONOW NA WARSTWIE 1 (bias dodaje pozniej)
             for i in range(0, len(hlp_matrix)):  # (wykona sie tyle razy ile jest przykladow)
                 result += hlp_matrix[i][k] * matrix_of_errors[j + len(matrix_wages_1_layer)][i]   # matrix_of_errors[i][j] ma mi wziac kazdy przyklad pokolei dla danego neuronu    TU TRZEBA ZMIENIC INDEKSY
-            matrix_deltas_2_layer[j][k + 1] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k + 1
+            if (is_bias):
+                matrix_deltas_2_layer[j][k + 1] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k + 1
+            else:
+                matrix_deltas_2_layer[j][k] = result  # delta dla zapisywana w macierzy w wierszu j od kolumny k
             result = 0
     # print()
     # print("delty warstwa wyjsciowa:")
@@ -351,10 +373,10 @@ def gradient_descent(matrix_old_wages_1_layer, matrix_old_wages_2_layer, matrix_
 
     return matrix_new_wages_1_layer, matrix_new_wages_2_layer
 
-def back_propagation(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums, data_matrix, alfa):
+def back_propagation(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums, data_matrix, alfa, is_bias):
     # funkcja skladajaca do siebie funckje: error, liczenie_trojkacikow, liczenie_dija i gradient_descent
-    matrix_of_errors = error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums)
-    matrix_deltas_1_layer, matrix_deltas_2_layer = liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_errors, data_matrix, matrix_of_sigmoid_values)
+    matrix_of_errors = error(expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums, is_bias)
+    matrix_deltas_1_layer, matrix_deltas_2_layer = liczenie_trojkacikow(matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_errors, data_matrix, matrix_of_sigmoid_values, is_bias)
     matrix_dij_1_layer, matrix_dij_2_layer = liczenie_dija(matrix_deltas_1_layer, matrix_deltas_2_layer, data_matrix)
     matrix_new_wages_1_layer, matrix_new_wages_2_layer = gradient_descent(matrix_wages_1_layer, matrix_wages_2_layer, matrix_dij_1_layer, matrix_dij_2_layer, alfa)
 
@@ -397,7 +419,7 @@ def mean_square_error(matrix_of_outcomes, expected_result_matrix, nr_of_neurons_
 # def write_to_file:
 #     # zapisuje otrzymane wyniki do pliku
 #
-def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations):
+def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias):
     # skleja ze soba funkcje do nauki
 
     # print()
@@ -435,8 +457,8 @@ def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer,
         # - licze gradient descent (nowe wagi) na podstawie starej wagi, alfy i Dija
         # - mean_square_error jest mi potrzebny do sprawdzania funkcji kosztu (dzieki niej wiemy, czy siec sie uczy)
 
-        matrix_of_sums, matrix_of_sigmoid_values = count_neuron(normalized_data_matrix, matrix_new_wages_1_layer, matrix_new_wages_2_layer)
-        matrix_new_wages_1_layer, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums, normalized_data_matrix, alfa)
+        matrix_of_sums, matrix_of_sigmoid_values = count_neuron(normalized_data_matrix, matrix_new_wages_1_layer, matrix_new_wages_2_layer, is_bias)
+        matrix_new_wages_1_layer, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values, matrix_wages_1_layer, matrix_wages_2_layer, matrix_of_sums, normalized_data_matrix, alfa, is_bias)
         mean_square_error(matrix_of_sigmoid_values, normalized_expected_result_matrix, len(matrix_wages_1_layer))
 
     matrix_of_sigmoid_values = change_0_1_values_back_to_normal(data_matrix, matrix_of_sigmoid_values)
@@ -448,6 +470,9 @@ def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer,
 
 # def testing:
 #     # sklada razem funkcje az do wyliczenia bledow, nastepnie przechodzi do change_0_1_values_back_to_normal
+    # 1. wzorzec treningowy podawany jest na wejścia sieci,
+    # 2. odbywa się jego propagacja w przód
+    # 3. na podstawie wartości odpowiedzi wygenerowanej przez sieć oraz wartości pożądanego wzorca odpowiedzi następuje wyznaczenie błędów
 
 
 
@@ -455,6 +480,12 @@ def learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer,
 
 # main / user communication
 # nr_of_neurons_hidden_layer = (int)(input("podaj liczbe neuronow w warstwie ukrytej: "))
+is_bias_input = input("z biasem (t), czy bez biasu (n): ")
+if (is_bias_input == "t"):
+    is_bias = True
+else:
+    is_bias = False
+
 nr_of_neurons_hidden_layer = 2
 data_matrix, expected_result_matrix = read_from_file('Iris.csv')  # zbior irysow
 alfa = random.uniform(0, 1) # todo: opowiedzni zakres??
@@ -468,10 +499,10 @@ normalized_expected_result_matrix = change_input_to_0_1_values(expected_result_m
 # print("data matrix:")
 # for i in range (0, 150):
 #     print(normalized_data_matrix[i])
-matrix_wages_1_layer = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
-matrix_wages_2_layer = generate_wages(nr_of_neurons_hidden_layer, 3)  # (liczba neuronow w warswie ukrytej) x (liczba neuronow w tej warstwie - 3, bo sa 3 rodzaje kwiatkow)
-nr_of_iterations = 2000
-learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations)
+matrix_wages_1_layer = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
+matrix_wages_2_layer = generate_wages(nr_of_neurons_hidden_layer, 3, is_bias)  # (liczba neuronow w warswie ukrytej) x (liczba neuronow w tej warstwie - 3, bo sa 3 rodzaje kwiatkow)
+nr_of_iterations = 1000
+learning(normalized_data_matrix, matrix_wages_1_layer, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias)
 
 # print()
 # for i in range (0, 150):
