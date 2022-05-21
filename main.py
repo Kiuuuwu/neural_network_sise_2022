@@ -446,13 +446,39 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
         # todo: czy ja tu na pewno daje dobre wartosci do nastepnej iteracji?
 
 
-        # TODO: SHUFFLE NIE DZIALA!!!!!
+        # TODO: SHUFFLE NIE DZIALA!!!!! mi wszystko szufluje zamiast jedynie wiersze
         # print("normalized_data_matrix before shuffle:")
         # for k in range(0, len(normalized_data_matrix)):
         #     print(normalized_data_matrix[k])
         if (is_shuffle == 2):
             # zmieniamy kolejnosc wierszy z data
-            normalized_data_matrix = random.shuffle(normalized_data_matrix) # zwraca none :c
+            # normalized_data_matrix = random.shuffle(normalized_data_matrix) # zwraca none :c
+
+            # changes = np.random.choice(len(normalized_data_matrix), len(normalized_data_matrix), replace=False)
+            # normalized_data_matrix = normalized_data_matrix[changes]
+            # normalized_expected_result_matrix = normalized_expected_result_matrix[changes]
+            # normalized_expected_result_matrix = normalized_expected_result_matrix[changes]
+
+            hlp_matrix = [[0 for x in range(len(normalized_data_matrix))] for y in
+                          range(len(normalized_data_matrix[0]))]
+            for j in range(0, len(hlp_matrix)):
+                for i in range(0, len(hlp_matrix[0])):
+                    hlp_matrix[j][i] = normalized_data_matrix[i][j]
+
+            hlp_matrix_1 = [[0 for x in range(len(normalized_expected_result_matrix))] for y in
+                          range(len(normalized_expected_result_matrix[0]))]
+            for j in range(0, len(hlp_matrix_1)):
+                for i in range(0, len(hlp_matrix_1[0])):
+                    hlp_matrix_1[j][i] = normalized_expected_result_matrix[i][j]
+
+            df = pd.DataFrame({'trait_1':hlp_matrix[0],
+                               'trait_2':hlp_matrix[1],
+                               'trait_3':hlp_matrix[2],
+                               'trait_4':hlp_matrix[3],
+                               'result':hlp_matrix_1[0]})
+            # print(df.to_string())
+            df_shuffled = df.sample(frac=1).reset_index(drop=True)
+            # print(df_shuffled.to_string())
         # print("normalized_data_matrix after shuffle:")
         # for k in range (0, len(normalized_data_matrix)):
         #     print(normalized_data_matrix[k])
