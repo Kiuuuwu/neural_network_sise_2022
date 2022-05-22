@@ -421,17 +421,9 @@ def mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expect
 def write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer):
     # zapisuje otrzymane wyniki do pliku; osobno bledy co dana liczbe iteracji i wyuczone wagi
 
-    # data to be written row-wise in csv file
-    # opening the csv file in 'w+' mode
-    # file = open('mean_square_errors.csv', 'w+', newline='')
-    # # writing the data into the file
-    # with file:
-    #     write = csv.writer(file)
-    #     write.writerows(mean_errors_array)
-
     f = open('mean_square_errors.csv', 'w')
     writer = csv.writer(f)
-    print("len(mean_errors_array)", len(mean_errors_array), mean_errors_array[0])
+    # print("len(mean_errors_array)", len(mean_errors_array), mean_errors_array[0])
     # for i in range (0, len(mean_errors_array)):
     #     print(mean_errors_array[i])
     writer.writerow(mean_errors_array)
@@ -439,35 +431,107 @@ def write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, ma
 
     f = open('learned_wages_hidden_layers.csv', 'w')
     writer = csv.writer(f)
-    for i in range(0, len(matrix_new_wages_hidden_layers)):
-        for j in range (0, len(matrix_new_wages_hidden_layers[i])):
-            writer.writerow(matrix_new_wages_hidden_layers[i][j])
+    writer.writerows(matrix_new_wages_hidden_layers)
     f.close()
 
     f = open('learned_wages_output_layer.csv', 'w')
     writer = csv.writer(f)
-    for i in range(0, len(matrix_new_wages_2_layer)):
-        writer.writerow(matrix_new_wages_2_layer[i])
+    writer.writerows(matrix_new_wages_2_layer)
     f.close()
 
-# def write_to_file_testing():
+def write_to_file_testing(normalized_data_matrix, mean_error, normalized_expected_result_matrix, matrix_of_all_errors,
+                          matrix_of_sigmoid_values_for_all_layers, matrix_wages_2_layer, matrix_of_wages_hidden_layers):
+
+    f = open('from_testing.csv', 'w')
+
+    writer = csv.writer(f)
+    str = "input data:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    for i in range(0, len(normalized_data_matrix)):
+        writer.writerow(normalized_data_matrix[i])
+
+    str = "mean error:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    array = []
+    array.append(mean_error)
+    writer.writerow(array)
+
+    str = "expected results:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    for i in range (0, len(normalized_expected_result_matrix)):
+        writer.writerow(normalized_expected_result_matrix[i])
+
+    str = "errors for every neuron:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    for i in range(0, len(matrix_of_all_errors)):
+        for j in range (0, len(matrix_of_all_errors[i])):
+            writer.writerow(matrix_of_all_errors[i][j])
+
+    str = "outputs on every neuron:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    for i in range(0, len(matrix_of_sigmoid_values_for_all_layers)):
+        for j in range (0, len(matrix_of_sigmoid_values_for_all_layers[i])):
+            writer.writerow(matrix_of_sigmoid_values_for_all_layers[i][j])
+
+    str = "wages of output neurons:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    for i in range (0, len(matrix_wages_2_layer)):
+        writer.writerow(matrix_wages_2_layer[i])
+
+    str = "wages of hidden neurons:"
+    array = []
+    array.append(str)
+    writer.writerow(array)
+    for i in range(0, len(matrix_of_wages_hidden_layers)):
+        for j in range(0, len(matrix_of_wages_hidden_layers[i])):
+            writer.writerow(matrix_of_wages_hidden_layers[i][j])
+
+    f.close()
 
 def read_wages_from_file(filename):
+    matric_3d_part1 = []
+    matric_3d_part2 = []
 
-    with open(filename) as file_obj:
-        reader_obj = csv.reader(file_obj, delimiter = ',')
-        # matrix = [0 for x in range(h)]
-        matrix = []
-        i = 0
-        for row in reader_obj:
-            if (i % 2 == 0):
-                matrix.append(row)
-            i += 1
-    print("SKRRRAAAAAA")
-    for i in range (0, len(matrix)):
-        print(matrix[i])
+    result_list = []
+    file = open(filename, newline='')
+    result_list = list(csv.reader(file))
+    # print("result_list")
+    # print(result_list)
+    result_2D=np.array(result_list, dtype='object')
+    # print("result_2D")
+    # print(result_2D)
 
-    return matrix
+    for i in range (0, len(result_2D)):
+        if len(result_2D[i]) != 0:
+            matric_3d_part2 = []
+            for j in range (0, len(result_2D[i])):
+                tmp = result_2D[i][j]   # string
+                if '[' in tmp:
+                    tmp = tmp[1:-1:1]
+                    tmp1 = tmp.split(',')
+                    tmp1 = list(map(float, tmp1))
+                    matric_3d_part2.append(tmp1)
+                else:
+                    matric_3d_part2.append(float(tmp))
+            matric_3d_part1.append(matric_3d_part2)
+
+
+
+
+    # print("eksperyment:", matric_3d_part1[0][0])
+    return matric_3d_part1
 
 
 def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu, variant, nr_of_neurons_hidden_layer):
@@ -559,23 +623,25 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
 
 
 
- # def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias):
- #     # sklada razem funkcje az do wyliczenia bledow, nastepnie przechodzi do change_0_1_values_back_to_normal
- #    # 1. wzorzec treningowy podawany jest na wejścia sieci,
- #    # 2. odbywa się jego propagacja w przód
- #    # 3. na podstawie wartości odpowiedzi wygenerowanej przez sieć oraz wartości pożądanego wzorca odpowiedzi następuje wyznaczenie błędów
- #    matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
- #    matrix_of_all_errors = error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, is_bias)
- #    # todo: wrzuc outcome do pliku ( wzorca wejściowego, popełnionego przez sieć błędu dla całego wzorca, pożądanego wzorca odpowiedzi,
- #    # todo: błędów popełnionych na poszczególnych wyjściach sieci, wartości wyjściowych neuronów wyjściowych, wag neuronów wyjściowych,
- #    # todo: wartości wyjściowych neuronów ukrytych, wag neuronów ukrytych (w kolejności warstw od dalszych względem wejść sieci do bliższych)
+def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias):
+    # sklada razem funkcje az do wyliczenia bledow, nastepnie przechodzi do change_0_1_values_back_to_normal
+    # 1. wzorzec treningowy podawany jest na wejścia sieci,
+    # 2. odbywa się jego propagacja w przód
+    # 3. na podstawie wartości odpowiedzi wygenerowanej przez sieć oraz wartości pożądanego wzorca odpowiedzi następuje wyznaczenie błędów
+    matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
+    # licze errory dla kazdego neuronu:
+    matrix_of_all_errors = error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, is_bias)
+    # licze sredni blad kwadratowy:
+    mean_error = mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expected_result_matrix,matrix_of_wages_hidden_layers)
+    write_to_file_testing(normalized_data_matrix, mean_error, normalized_expected_result_matrix, matrix_of_all_errors, matrix_of_sigmoid_values_for_all_layers, matrix_wages_2_layer, matrix_of_wages_hidden_layers)
 
 # main / user communication
 variant = (int)(input("irysy (1), czy autoencoder (2): "))
 
 if(variant == 1):
     mode = (int)(input("nauka (1), czy testowanie (2): "))
-    how_many_hidden_layers = (int)(input("podaj liczbe warstw ukrytych: "))
+    if (mode != 2):
+        how_many_hidden_layers = (int)(input("podaj liczbe warstw ukrytych: "))
 else:
     mode = 1    # w autoencoderze sie jedynie uczymy
     how_many_hidden_layers = 1
@@ -604,16 +670,17 @@ else:
 normalized_data_matrix = change_input_to_0_1_values(data_matrix)
 normalized_expected_result_matrix = change_input_to_0_1_values(expected_result_matrix)
 
-matrix_of_wages_hidden_layers = [None] * how_many_hidden_layers   # lista naktora wrzucam tablice 2d wag, a wiec tablica 3d, pierwszy wymiar: ktora warstwa ukryta, drugi wymiar: ktory neuron, trzeci wymiar: ktora waga
-for i in range (0, how_many_hidden_layers):
-    print("podaj liczbe neuronow w warstwie ukrytej", i, ": ")
-    nr_of_neurons_hidden_layer = (int)(input())
+if (mode != 2):
+    matrix_of_wages_hidden_layers = [None] * how_many_hidden_layers   # lista naktora wrzucam tablice 2d wag, a wiec tablica 3d, pierwszy wymiar: ktora warstwa ukryta, drugi wymiar: ktory neuron, trzeci wymiar: ktora waga
+    for i in range (0, how_many_hidden_layers):
+        print("podaj liczbe neuronow w warstwie ukrytej", i, ": ")
+        nr_of_neurons_hidden_layer = (int)(input())
 
-    if( mode == 1): #variant == 1 &&
-        if i == 0:    # pierwsza warstwa bierze info z data zamiast poprzedniej warstwy
-            matrix_of_wages_hidden_layers[i] = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
-        else:
-            matrix_of_wages_hidden_layers[i] = generate_wages(len(matrix_of_wages_hidden_layers[i - 1]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
+        if( mode == 1): #variant == 1 &&
+            if i == 0:    # pierwsza warstwa bierze info z data zamiast poprzedniej warstwy
+                matrix_of_wages_hidden_layers[i] = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
+            else:
+                matrix_of_wages_hidden_layers[i] = generate_wages(len(matrix_of_wages_hidden_layers[i - 1]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
 
 if (mode == 1):
     # if (variant == 1):
@@ -623,6 +690,23 @@ if (mode == 1):
 else:
     # matrix_of_wages_hidden_layers, matrix_wages_2_layer = wczytaj wagi z pliku
     matrix_of_wages_hidden_layers = read_wages_from_file('learned_wages_hidden_layers.csv')
+
+    print(" siema elo eluwina")
+    for i in range(0, len(matrix_of_wages_hidden_layers)):
+        for j in range (0, len(matrix_of_wages_hidden_layers[i])):
+            # for k in range (0, len(matrix_of_wages_hidden_layers[i][j])):
+            print(matrix_of_wages_hidden_layers[i][j])
+
+
     matrix_wages_2_layer = read_wages_from_file('learned_wages_output_layer.csv')
-    # testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
-    print("work in progres..")
+
+    print(" siema elo eluwina")
+    for i in range(0, len(matrix_wages_2_layer)):
+        # for j in range(0, len(matrix_of_wages_hidden_layers[i])):
+            # for k in range (0, len(matrix_of_wages_hidden_layers[i][j])):
+        print(matrix_wages_2_layer[i])
+
+    is_bias = False
+    if len(matrix_of_wages_hidden_layers[0][0]) > 4 :   # bo sa 4 cechy kwiatkow, wiec jak jest wiecej to dlatego ze jeszcze biad
+        is_bias = True
+    testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
