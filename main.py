@@ -73,6 +73,17 @@ def elo_bec():
 
     return fixed_data_matrix, fixed_expected_result_matrix, fixed_wages_matrix_1, fixed_wages_matrix_2
 
+def for_autoencoder_data():
+    # dane i wagi z przykaldu rozpisanego na kartce tylko po to zeby sprawdzic czy program dziala
+
+    # fixed_wages_matrix_1 = [[[0.5, 0.25, 1, 0],[0, 0.25, 0, 1]]]
+    # fixed_wages_matrix_2 = [[0.25,0.5,1]]
+
+    fixed_data_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], dtype='float32')
+    fixed_expected_result_matrix = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]], dtype='float32')
+
+    return fixed_data_matrix, fixed_expected_result_matrix
+
 
 def sum(wages_matrix, data_row, is_bias):    # data_row to jeden rzad z data, bo chce jeden przyklad, wszystkie cechy; wages_matrix to wagi dla danego nauronu
     # suma, pierwszy etap w kazdym neuronie; zwraca sume dla danego wezla i danego przykladu
@@ -408,7 +419,7 @@ def mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expect
 # def write_to_file:
 #     # zapisuje otrzymane wyniki do pliku
 #
-def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu):
+def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu, variant, nr_of_neurons_hidden_layer):
     # skleja ze soba funkcje do nauki
 
     # CZESC DO TESTOW: -------------------------------------------------------------------------------------------------------------------------------
@@ -417,6 +428,14 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
     # normalized_expected_result_matrix = change_input_to_0_1_values(expected_result_matrix)
     # alfa = 0.5
     # ------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+    if (variant == 2):
+        fixed_data_matrix, fixed_expected_result_matrix = for_autoencoder_data()
+        normalized_data_matrix = change_input_to_0_1_values(fixed_data_matrix)
+        normalized_expected_result_matrix = change_input_to_0_1_values(fixed_expected_result_matrix)
+        matrix_of_wages_hidden_layers[0] = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)
+        matrix_wages_2_layer = generate_wages(nr_of_neurons_hidden_layer, 4, is_bias)  # (liczba neuronow w warswie ukrytej) x (liczba neuronow w tej warstwie - 3, bo sa 3 rodzaje kwiatkow)
 
     # tworze macierz momentum (na starcie one maja wartosci 0, sa zmieniane pozniej):
     momentum_hidden_layers = copy.deepcopy(matrix_of_wages_hidden_layers)
@@ -443,22 +462,9 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
         # - licze Dije (srednie bledy) -> trojkacik * (1/liczba_przykladow)
         # - licze gradient descent (nowe wagi) na podstawie starej wagi, alfy i Dija
         # - mean_square_error jest mi potrzebny do sprawdzania funkcji kosztu (dzieki niej wiemy, czy siec sie uczy)
-        # todo: czy ja tu na pewno daje dobre wartosci do nastepnej iteracji?
 
-
-        # TODO: SHUFFLE NIE DZIALA!!!!! mi wszystko szufluje zamiast jedynie wiersze
-        # print("normalized_data_matrix before shuffle:")
-        # for k in range(0, len(normalized_data_matrix)):
-        #     print(normalized_data_matrix[k])
         if (is_shuffle == 2):
             # zmieniamy kolejnosc wierszy z data
-            # normalized_data_matrix = random.shuffle(normalized_data_matrix) # zwraca none :c
-
-            # changes = np.random.choice(len(normalized_data_matrix), len(normalized_data_matrix), replace=False)
-            # normalized_data_matrix = normalized_data_matrix[changes]
-            # normalized_expected_result_matrix = normalized_expected_result_matrix[changes]
-            # normalized_expected_result_matrix = normalized_expected_result_matrix[changes]
-
             hlp_matrix = [[0 for x in range(len(normalized_data_matrix))] for y in
                           range(len(normalized_data_matrix[0]))]
             for j in range(0, len(hlp_matrix)):
@@ -479,10 +485,6 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
             # print(df.to_string())
             df_shuffled = df.sample(frac=1).reset_index(drop=True)
             # print(df_shuffled.to_string())
-        # print("normalized_data_matrix after shuffle:")
-        # for k in range (0, len(normalized_data_matrix)):
-        #     print(normalized_data_matrix[k])
-
 
         matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer, is_bias)
         matrix_new_wages_hidden_layers, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, normalized_data_matrix, alfa, is_bias, mu, momentum_hidden_layers, momentum_output_layers)
@@ -495,19 +497,31 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
         for i in range(0, len(matrix_of_sigmoid_values_for_all_layers[j])):
             print(matrix_of_sigmoid_values_for_all_layers[j][i])
 
-
-# def testing:
-#     # sklada razem funkcje az do wyliczenia bledow, nastepnie przechodzi do change_0_1_values_back_to_normal
-    # 1. wzorzec treningowy podawany jest na wejścia sieci,
-    # 2. odbywa się jego propagacja w przód
-    # 3. na podstawie wartości odpowiedzi wygenerowanej przez sieć oraz wartości pożądanego wzorca odpowiedzi następuje wyznaczenie błędów
+    #todo:     # zapisz co sie nauczyles do pliku (wagi)
 
 
 
-
+ # def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias):
+ #     # sklada razem funkcje az do wyliczenia bledow, nastepnie przechodzi do change_0_1_values_back_to_normal
+ #    # 1. wzorzec treningowy podawany jest na wejścia sieci,
+ #    # 2. odbywa się jego propagacja w przód
+ #    # 3. na podstawie wartości odpowiedzi wygenerowanej przez sieć oraz wartości pożądanego wzorca odpowiedzi następuje wyznaczenie błędów
+ #    matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
+ #    matrix_of_all_errors = error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, is_bias)
+ #    # todo: wrzuc outcome do pliku ( wzorca wejściowego, popełnionego przez sieć błędu dla całego wzorca, pożądanego wzorca odpowiedzi,
+ #    # todo: błędów popełnionych na poszczególnych wyjściach sieci, wartości wyjściowych neuronów wyjściowych, wag neuronów wyjściowych,
+ #    # todo: wartości wyjściowych neuronów ukrytych, wag neuronów ukrytych (w kolejności warstw od dalszych względem wejść sieci do bliższych)
 
 # main / user communication
-how_many_hidden_layers = (int)(input("podaj liczbe warstw ukrytych: "))
+variant = (int)(input("irysy (1), czy autoencoder (2): "))
+
+if(variant == 1):
+    mode = (int)(input("nauka (1), czy testowanie (2): "))
+    how_many_hidden_layers = (int)(input("podaj liczbe warstw ukrytych: "))
+else:
+    mode = 1    # w autoencoderze sie jedynie uczymy
+    how_many_hidden_layers = 1
+
 is_bias_input = input("z biasem (t), czy bez biasu (n): ")
 nr_of_iterations = (int)(input("podaj liczbe iteracji: "))
 is_shuffle = (int)(input("wczytujemy wartosci kolejno (1), czy losowo (2): "))
@@ -518,22 +532,34 @@ if (is_bias_input == "t"):
 else:
     is_bias = False
 
-data_matrix, expected_result_matrix = read_from_file('Iris.csv')  # zbior irysow
-alfa = random.uniform(0, 1) # todo: opowiedzni zakres??
+if (mode == 1):
+    data_matrix, expected_result_matrix = read_from_file('learn.csv')
+else:
+    data_matrix, expected_result_matrix = read_from_file('test.csv')
+
+# alfa = random.uniform(0, 1) # opowiedzni zakres??
+alfa = (float)(input("podaj wspolczynnik nauki (alfa): "))
+
 normalized_data_matrix = change_input_to_0_1_values(data_matrix)
 normalized_expected_result_matrix = change_input_to_0_1_values(expected_result_matrix)
 
-matrix_of_hidden_layers = [None] * how_many_hidden_layers   # lista naktora wrzucam tablice 2d wag, a wiec tablica 3d, pierwszy wymiar: ktora warstwa ukryta, drugi wymiar: ktory neuron, trzeci wymiar: ktora waga
+matrix_of_wages_hidden_layers = [None] * how_many_hidden_layers   # lista naktora wrzucam tablice 2d wag, a wiec tablica 3d, pierwszy wymiar: ktora warstwa ukryta, drugi wymiar: ktory neuron, trzeci wymiar: ktora waga
 for i in range (0, how_many_hidden_layers):
     print("podaj liczbe neuronow w warstwie ukrytej", i, ": ")
     nr_of_neurons_hidden_layer = (int)(input())
 
+    if(variant == 1):
+        if i == 0:    # pierwsza warstwa bierze info z data zamiast poprzedniej warstwy
+            matrix_of_wages_hidden_layers[i] = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
+        else:
+            matrix_of_wages_hidden_layers[i] = generate_wages(len(matrix_of_wages_hidden_layers[i - 1]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
 
+if (mode == 1):
+    # if (variant == 1):
+    matrix_wages_2_layer = generate_wages(nr_of_neurons_hidden_layer, 3, is_bias)  # (liczba neuronow w warswie ukrytej) x (liczba neuronow w tej warstwie - 3, bo sa 3 rodzaje kwiatkow)
+    learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu, variant, nr_of_neurons_hidden_layer)
 
-    if i == 0:    # pierwsza warstwa bierze info z data zamiast poprzedniej warstwy
-        matrix_of_hidden_layers[i] = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
-    else:
-        matrix_of_hidden_layers[i] = generate_wages(len(matrix_of_hidden_layers[i - 1]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
-
-matrix_wages_2_layer = generate_wages(nr_of_neurons_hidden_layer, 3, is_bias)  # (liczba neuronow w warswie ukrytej) x (liczba neuronow w tej warstwie - 3, bo sa 3 rodzaje kwiatkow)
-learning(normalized_data_matrix, matrix_of_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu)
+else:
+    # matrix_of_wages_hidden_layers, matrix_wages_2_layer = wczytaj wagi z pliku
+    # testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
+    print("work in progres..")
