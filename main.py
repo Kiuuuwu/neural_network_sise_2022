@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import random
 import math
+import csv
 
 def read_from_file(filename):
     # wczytywanie csv i podzial danych na macierze
@@ -413,12 +414,45 @@ def mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expect
                        matrix_of_sigmoid_values_for_all_layers[-1][j][i]) ** 2
 
     result = result / len(matrix_of_sigmoid_values_for_all_layers[0])
-    print()
-    print("funkcja kosztu:",result)
+    # print()
+    # print("funkcja kosztu:",result)
+    return result
 
-# def write_to_file:
-#     # zapisuje otrzymane wyniki do pliku
-#
+def write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer):
+    # zapisuje otrzymane wyniki do pliku; osobno bledy co dana liczbe iteracji i wyuczone wagi
+
+    # data to be written row-wise in csv file
+    # opening the csv file in 'w+' mode
+    # file = open('mean_square_errors.csv', 'w+', newline='')
+    # # writing the data into the file
+    # with file:
+    #     write = csv.writer(file)
+    #     write.writerows(mean_errors_array)
+
+    f = open('mean_square_errors.csv', 'w')
+    writer = csv.writer(f)
+    print("len(mean_errors_array)", len(mean_errors_array), mean_errors_array[0])
+    # for i in range (0, len(mean_errors_array)):
+    #     print(mean_errors_array[i])
+    writer.writerow(mean_errors_array)
+    f.close()
+
+    f = open('learned_wages_hidden_layers.csv', 'w')
+    writer = csv.writer(f)
+    for i in range(0, len(matrix_new_wages_hidden_layers)):
+        for j in range (0, len(matrix_new_wages_hidden_layers[i])):
+            writer.writerow(matrix_new_wages_hidden_layers[i][j])
+    f.close()
+
+    f = open('learned_wages_output_layer.csv', 'w')
+    writer = csv.writer(f)
+    for i in range(0, len(matrix_new_wages_2_layer)):
+        writer.writerow(matrix_new_wages_2_layer[i])
+    f.close()
+
+# def write_to_file_testing():
+
+
 def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu, variant, nr_of_neurons_hidden_layer):
     # skleja ze soba funkcje do nauki
 
@@ -452,6 +486,8 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
 
     matrix_new_wages_hidden_layers = copy.deepcopy(matrix_of_wages_hidden_layers) # taka sama tablica 3D, po to by trzymac w niej nowe wagi
     matrix_new_wages_2_layer = copy.deepcopy(matrix_wages_2_layer)
+
+    mean_errors_array = []
 
     for i in range (0, nr_of_iterations):
         # co sie powinno dziac w kazdej iteracji:
@@ -488,9 +524,13 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
 
         matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer, is_bias)
         matrix_new_wages_hidden_layers, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, normalized_data_matrix, alfa, is_bias, mu, momentum_hidden_layers, momentum_output_layers)
-        mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expected_result_matrix, matrix_new_wages_hidden_layers)
+        mean_error = mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expected_result_matrix, matrix_new_wages_hidden_layers)
+
+        if (i % 10 == 0):
+            mean_errors_array.append(mean_error)
 
     matrix_of_sigmoid_values_for_all_layers = change_0_1_values_back_to_normal(data_matrix, matrix_of_sigmoid_values_for_all_layers)
+
     print()
     print("sigmoid_values for every neuron:")
     for j in range (0, len(matrix_of_sigmoid_values_for_all_layers)):
@@ -498,6 +538,7 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
             print(matrix_of_sigmoid_values_for_all_layers[j][i])
 
     #todo:     # zapisz co sie nauczyles do pliku (wagi)
+    write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer)
 
 
 
