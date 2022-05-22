@@ -452,6 +452,23 @@ def write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, ma
 
 # def write_to_file_testing():
 
+def read_wages_from_file(filename):
+
+    with open(filename) as file_obj:
+        reader_obj = csv.reader(file_obj, delimiter = ',')
+        # matrix = [0 for x in range(h)]
+        matrix = []
+        i = 0
+        for row in reader_obj:
+            if (i % 2 == 0):
+                matrix.append(row)
+            i += 1
+    print("SKRRRAAAAAA")
+    for i in range (0, len(matrix)):
+        print(matrix[i])
+
+    return matrix
+
 
 def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, normalized_expected_result_matrix, alfa, nr_of_iterations, is_bias, is_shuffle, mu, variant, nr_of_neurons_hidden_layer):
     # skleja ze soba funkcje do nauki
@@ -563,23 +580,26 @@ else:
     mode = 1    # w autoencoderze sie jedynie uczymy
     how_many_hidden_layers = 1
 
-is_bias_input = input("z biasem (t), czy bez biasu (n): ")
-nr_of_iterations = (int)(input("podaj liczbe iteracji: "))
-is_shuffle = (int)(input("wczytujemy wartosci kolejno (1), czy losowo (2): "))
-mu = (float)(input("podaj momentum: "))
+if mode != 2:
+    is_bias_input = input("z biasem (t), czy bez biasu (n): ")
+    nr_of_iterations = (int)(input("podaj liczbe iteracji: "))
+    is_shuffle = (int)(input("wczytujemy wartosci kolejno (1), czy losowo (2): "))
+    mu = (float)(input("podaj momentum: "))
 
-if (is_bias_input == "t"):
-    is_bias = True
-else:
-    is_bias = False
+    if (is_bias_input == "t"):
+        is_bias = True
+    else:
+        is_bias = False
+
+    # alfa = random.uniform(0, 1) # opowiedzni zakres??
+    alfa = (float)(input("podaj wspolczynnik nauki (alfa): "))
 
 if (mode == 1):
     data_matrix, expected_result_matrix = read_from_file('learn.csv')
 else:
     data_matrix, expected_result_matrix = read_from_file('test.csv')
 
-# alfa = random.uniform(0, 1) # opowiedzni zakres??
-alfa = (float)(input("podaj wspolczynnik nauki (alfa): "))
+
 
 normalized_data_matrix = change_input_to_0_1_values(data_matrix)
 normalized_expected_result_matrix = change_input_to_0_1_values(expected_result_matrix)
@@ -589,7 +609,7 @@ for i in range (0, how_many_hidden_layers):
     print("podaj liczbe neuronow w warstwie ukrytej", i, ": ")
     nr_of_neurons_hidden_layer = (int)(input())
 
-    if(variant == 1):
+    if( mode == 1): #variant == 1 &&
         if i == 0:    # pierwsza warstwa bierze info z data zamiast poprzedniej warstwy
             matrix_of_wages_hidden_layers[i] = generate_wages(len(normalized_data_matrix[0]), nr_of_neurons_hidden_layer, is_bias)  # (liczba cech - neuronow w warstwie wejsciowej (bies dodajemy wewnatrz funkcji, spokojnie)) x (liczba neuronow w tej warstwie) NOTE: W TYM KODZIE ZAWSZE BEDA WARSTWY: 0; 1; 2
         else:
@@ -602,5 +622,7 @@ if (mode == 1):
 
 else:
     # matrix_of_wages_hidden_layers, matrix_wages_2_layer = wczytaj wagi z pliku
+    matrix_of_wages_hidden_layers = read_wages_from_file('learned_wages_hidden_layers.csv')
+    matrix_wages_2_layer = read_wages_from_file('learned_wages_output_layer.csv')
     # testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
     print("work in progres..")
