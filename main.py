@@ -618,12 +618,11 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
         for i in range(0, len(matrix_of_sigmoid_values_for_all_layers[j])):
             print(matrix_of_sigmoid_values_for_all_layers[j][i])
 
-    #todo:     # zapisz co sie nauczyles do pliku (wagi)
     write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer)
 
 
 
-def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias):
+def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias, data_matrix):
     # sklada razem funkcje az do wyliczenia bledow, nastepnie przechodzi do change_0_1_values_back_to_normal
     # 1. wzorzec treningowy podawany jest na wejścia sieci,
     # 2. odbywa się jego propagacja w przód
@@ -633,7 +632,135 @@ def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of
     matrix_of_all_errors = error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, is_bias)
     # licze sredni blad kwadratowy:
     mean_error = mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expected_result_matrix,matrix_of_wages_hidden_layers)
-    write_to_file_testing(normalized_data_matrix, mean_error, normalized_expected_result_matrix, matrix_of_all_errors, matrix_of_sigmoid_values_for_all_layers, matrix_wages_2_layer, matrix_of_wages_hidden_layers)
+    write_to_file_testing(data_matrix, mean_error, normalized_expected_result_matrix, matrix_of_all_errors, matrix_of_sigmoid_values_for_all_layers, matrix_wages_2_layer, matrix_of_wages_hidden_layers)
+    how_many_real(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers)
+
+
+
+def how_many_real(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers):
+    # dla wszystkich przykladow biore to co wyszlo (ostatnie 3 rzedy matrix_of_all_sigmoid_values) i sprawdzam, czy dobrze
+    # rozbicie na klasy to po prosto podzial na 50/50/50
+
+
+    print("sigmoid_values for every neuron:")
+    for j in range (0, len(matrix_of_sigmoid_values_for_all_layers)):   # warstwa?
+        for i in range(0, len(matrix_of_sigmoid_values_for_all_layers[j])): # neuron?
+            print(matrix_of_sigmoid_values_for_all_layers[j][i])
+
+    print("liczba warstw:",len(matrix_of_sigmoid_values_for_all_layers))
+    print("liczba neuronow wyjsciowych:",len(matrix_of_sigmoid_values_for_all_layers[-1]))
+    print("liczba przykladow:", len(matrix_of_sigmoid_values_for_all_layers[-1][0]))
+
+    real_setosa = 0
+    real_versicolor = 0
+    real_virginica = 0
+
+    for i in range (0, len(normalized_expected_result_matrix)):
+        # sprawdzam ile jest kwiatkow jakiego rodzaju
+        if normalized_expected_result_matrix[i][0] == 1:
+            real_setosa += 1
+        if normalized_expected_result_matrix[i][1] == 1:
+            real_versicolor += 1
+        if normalized_expected_result_matrix[i][2] == 1:
+            real_virginica += 1
+
+    # licze ile jest neuronow w warstwach ukrytych
+    nr_of_neurons_hidden_layers = 0
+    for i in range (0, len(matrix_of_wages_hidden_layers)):
+        for j in range (0, len(matrix_of_wages_hidden_layers[i])):
+            nr_of_neurons_hidden_layers += 1
+
+
+    real_setosa_recognised_as_setosa = 0
+    real_setosa_recognised_as_versicolor = 0
+    real_setosa_recognised_as_virginica = 0
+
+    for i in range (0, real_setosa):    # sprawdzam jako jakie kwiatki zostaly zakwalifikowane te, ktore rzeczywiscie sa setosami
+        # for j in range (0, len(matrix_of_sigmoid_values_for_all_layers[-1])): # dla wszytskich neuronow wyjsciowych
+        if matrix_of_sigmoid_values_for_all_layers[-1][0][i] >  matrix_of_sigmoid_values_for_all_layers[-1][1][i] and matrix_of_sigmoid_values_for_all_layers[-1][0][i] >  matrix_of_sigmoid_values_for_all_layers[-1][2][i]:   # jesli setosa jest wykryta tam, gdzie powinna
+            real_setosa_recognised_as_setosa += 1
+        if matrix_of_sigmoid_values_for_all_layers[-1][1][i] >  matrix_of_sigmoid_values_for_all_layers[-1][0][i] and matrix_of_sigmoid_values_for_all_layers[-1][1][i] >  matrix_of_sigmoid_values_for_all_layers[-1][2][i]:   # jesli versicolor jest wykryty tam, gdzie powinna byc setosa
+            real_setosa_recognised_as_versicolor += 1
+        if matrix_of_sigmoid_values_for_all_layers[-1][2][i] >  matrix_of_sigmoid_values_for_all_layers[-1][0][i] and matrix_of_sigmoid_values_for_all_layers[-1][2][i] >  matrix_of_sigmoid_values_for_all_layers[-1][1][i]:   # jesli virginica jest wykryta tam, gdzie powinna byc setosa
+            real_setosa_recognised_as_virginica += 1
+
+
+
+    real_versicolor_recognised_as_versicolor = 0
+    real_versicolor_recognised_as_setosa = 0
+    real_versicolor_recognised_as_virginica = 0
+
+    for i in range (real_setosa, real_setosa + real_versicolor):    # sprawdzam jako jakie kwiatki zostaly zakwalifikowane te, ktore rzeczywiscie sa versicolor
+        # for j in range (0, len(matrix_of_sigmoid_values_for_all_layers[-1])): # dla wszytskich neuronow wyjsciowych
+        if matrix_of_sigmoid_values_for_all_layers[-1][0][i] >  matrix_of_sigmoid_values_for_all_layers[-1][1][i] and matrix_of_sigmoid_values_for_all_layers[-1][0][i] >  matrix_of_sigmoid_values_for_all_layers[-1][2][i]:   # jesli setosa jest wykryta tam, gdzie powinna
+            real_versicolor_recognised_as_setosa += 1
+        if matrix_of_sigmoid_values_for_all_layers[-1][1][i] >  matrix_of_sigmoid_values_for_all_layers[-1][0][i] and matrix_of_sigmoid_values_for_all_layers[-1][1][i] >  matrix_of_sigmoid_values_for_all_layers[-1][2][i]:   # jesli versicolor jest wykryty tam, gdzie powinna byc setosa
+            real_versicolor_recognised_as_versicolor += 1
+        if matrix_of_sigmoid_values_for_all_layers[-1][2][i] >  matrix_of_sigmoid_values_for_all_layers[-1][0][i] and matrix_of_sigmoid_values_for_all_layers[-1][2][i] >  matrix_of_sigmoid_values_for_all_layers[-1][1][i]:   # jesli virginica jest wykryta tam, gdzie powinna byc setosa
+            real_versicolor_recognised_as_virginica += 1
+
+
+
+    real_virginica_recognised_as_virginica = 0
+    real_virginica_recognised_as_setosa = 0
+    real_virginica_recognised_as_versicolor = 0
+
+    for i in range (real_setosa + real_versicolor, real_setosa + real_versicolor + real_virginica):    # sprawdzam jako jakie kwiatki zostaly zakwalifikowane te, ktore rzeczywiscie sa virginica
+        # for j in range (0, len(matrix_of_sigmoid_values_for_all_layers[-1])): # dla wszytskich neuronow wyjsciowych
+        if matrix_of_sigmoid_values_for_all_layers[-1][0][i] >  matrix_of_sigmoid_values_for_all_layers[-1][1][i] and matrix_of_sigmoid_values_for_all_layers[-1][0][i] >  matrix_of_sigmoid_values_for_all_layers[-1][2][i]:   # jesli setosa jest wykryta tam, gdzie powinna
+            real_virginica_recognised_as_setosa += 1
+        if matrix_of_sigmoid_values_for_all_layers[-1][1][i] >  matrix_of_sigmoid_values_for_all_layers[-1][0][i] and matrix_of_sigmoid_values_for_all_layers[-1][1][i] >  matrix_of_sigmoid_values_for_all_layers[-1][2][i]:   # jesli versicolor jest wykryty tam, gdzie powinna byc setosa
+            real_virginica_recognised_as_versicolor += 1
+        if matrix_of_sigmoid_values_for_all_layers[-1][2][i] >  matrix_of_sigmoid_values_for_all_layers[-1][0][i] and matrix_of_sigmoid_values_for_all_layers[-1][2][i] >  matrix_of_sigmoid_values_for_all_layers[-1][1][i]:   # jesli virginica jest wykryta tam, gdzie powinna byc setosa
+            real_virginica_recognised_as_virginica += 1
+
+    print("real_setosa:",real_setosa)
+    print("real_virginica:",real_virginica)
+    print("real_versicolor:",real_versicolor)
+    print()
+
+    print("real_setosa_recognised_as_setosa:",real_setosa_recognised_as_setosa)
+    print("real_setosa_recognised_as_versicolor",real_setosa_recognised_as_versicolor)
+    print("real_setosa_recognised_as_virginica",real_setosa_recognised_as_virginica)
+    print()
+
+    print("real_versicolor_recognised_as_versicolor",real_versicolor_recognised_as_versicolor)
+    print("real_versicolor_recognised_as_setosa",real_versicolor_recognised_as_setosa)
+    print("real_versicolor_recognised_as_virginica",real_versicolor_recognised_as_virginica)
+    print()
+
+    print("real_virginica_recognised_as_virginica",real_virginica_recognised_as_virginica)
+    print("real_virginica_recognised_as_setosa",real_virginica_recognised_as_setosa)
+    print("real_virginica_recognised_as_versicolor",real_virginica_recognised_as_versicolor)
+    print()
+
+
+    #
+    # correct_array = []
+    # how_many_are_correct = 0
+    # array_of_guesses = []
+    # second_array = []
+    # second_array.append(matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers][0])
+    # second_array.append(0)
+    # which_expected = 0
+    # for i in range (0, len(normalized_expected_result_matrix)):   # dla kazdego przykladu
+    #     cntr = len(normalized_expected_result_matrix[0])    # 3
+    #     for j in range (1, cntr):
+    #         if matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers + j][i] > matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers + j - 1][i]:
+    #             array_of_guesses.append(matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers + j][i])
+    #             array_of_guesses.append(j)  # bede wiedziala czy neuron 0 czy 1 czy 2 zostal wybrany
+    #         if array_of_guesses[0] > second_array[0]:
+    #             second_array[0] = array_of_guesses[0]
+    #             second_array[1] = array_of_guesses[1]
+    #         array_of_guesses = []
+    #         if normalized_expected_result_matrix[i][j - 1] == 1:
+    #             which_expected = j
+    #         if which_expected == second_array[1]:
+    #             how_many_are_correct += 1
+    #
+    # print("how_many_are_correct:",how_many_are_correct)
+
+
 
 # main / user communication
 variant = (int)(input("irysy (1), czy autoencoder (2): "))
@@ -690,23 +817,10 @@ if (mode == 1):
 else:
     # matrix_of_wages_hidden_layers, matrix_wages_2_layer = wczytaj wagi z pliku
     matrix_of_wages_hidden_layers = read_wages_from_file('learned_wages_hidden_layers.csv')
-
-    print(" siema elo eluwina")
-    for i in range(0, len(matrix_of_wages_hidden_layers)):
-        for j in range (0, len(matrix_of_wages_hidden_layers[i])):
-            # for k in range (0, len(matrix_of_wages_hidden_layers[i][j])):
-            print(matrix_of_wages_hidden_layers[i][j])
-
-
     matrix_wages_2_layer = read_wages_from_file('learned_wages_output_layer.csv')
 
-    print(" siema elo eluwina")
-    for i in range(0, len(matrix_wages_2_layer)):
-        # for j in range(0, len(matrix_of_wages_hidden_layers[i])):
-            # for k in range (0, len(matrix_of_wages_hidden_layers[i][j])):
-        print(matrix_wages_2_layer[i])
 
     is_bias = False
     if len(matrix_of_wages_hidden_layers[0][0]) > 4 :   # bo sa 4 cechy kwiatkow, wiec jak jest wiecej to dlatego ze jeszcze biad
         is_bias = True
-    testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias)
+    testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer, is_bias, data_matrix)
