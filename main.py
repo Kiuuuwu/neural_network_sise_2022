@@ -633,22 +633,22 @@ def testing(normalized_data_matrix, normalized_expected_result_matrix, matrix_of
     # licze sredni blad kwadratowy:
     mean_error = mean_square_error(matrix_of_sigmoid_values_for_all_layers, normalized_expected_result_matrix,matrix_of_wages_hidden_layers)
     write_to_file_testing(data_matrix, mean_error, normalized_expected_result_matrix, matrix_of_all_errors, matrix_of_sigmoid_values_for_all_layers, matrix_wages_2_layer, matrix_of_wages_hidden_layers)
-    how_many_real(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers)
+    confusion_matrix(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers)
 
 
 
-def how_many_real(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers):
+def confusion_matrix(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers):
     # dla wszystkich przykladow biore to co wyszlo (ostatnie 3 rzedy matrix_of_all_sigmoid_values) i sprawdzam, czy dobrze
     # rozbicie na klasy to po prosto podzial na 50/50/50
 
 
-    print("sigmoid_values for every neuron:")
-    for j in range (0, len(matrix_of_sigmoid_values_for_all_layers)):   # warstwa?
-        for i in range(0, len(matrix_of_sigmoid_values_for_all_layers[j])): # neuron?
-            print(matrix_of_sigmoid_values_for_all_layers[j][i])
+    # print("sigmoid_values for every neuron:")
+    # for j in range (0, len(matrix_of_sigmoid_values_for_all_layers)):   # warstwa?
+    #     for i in range(0, len(matrix_of_sigmoid_values_for_all_layers[j])): # neuron?
+    #         print(matrix_of_sigmoid_values_for_all_layers[j][i])
 
-    print("liczba warstw:",len(matrix_of_sigmoid_values_for_all_layers))
-    print("liczba neuronow wyjsciowych:",len(matrix_of_sigmoid_values_for_all_layers[-1]))
+    # print("liczba warstw:",len(matrix_of_sigmoid_values_for_all_layers))
+    # print("liczba neuronow wyjsciowych:",len(matrix_of_sigmoid_values_for_all_layers[-1]))
     print("liczba przykladow:", len(matrix_of_sigmoid_values_for_all_layers[-1][0]))
 
     real_setosa = 0
@@ -715,8 +715,8 @@ def how_many_real(normalized_expected_result_matrix, matrix_of_sigmoid_values_fo
             real_virginica_recognised_as_virginica += 1
 
     print("real_setosa:",real_setosa)
-    print("real_virginica:",real_virginica)
     print("real_versicolor:",real_versicolor)
+    print("real_virginica:", real_virginica)
     print()
 
     print("real_setosa_recognised_as_setosa:",real_setosa_recognised_as_setosa)
@@ -734,32 +734,35 @@ def how_many_real(normalized_expected_result_matrix, matrix_of_sigmoid_values_fo
     print("real_virginica_recognised_as_versicolor",real_virginica_recognised_as_versicolor)
     print()
 
+    setosa_recall = recall(real_setosa_recognised_as_setosa, real_setosa_recognised_as_versicolor + real_setosa_recognised_as_virginica)
+    setosa_precision = precision(real_setosa_recognised_as_setosa, real_versicolor_recognised_as_setosa + real_virginica_recognised_as_setosa)
+    setosa_f2 = f2(setosa_recall, setosa_precision)
 
-    #
-    # correct_array = []
-    # how_many_are_correct = 0
-    # array_of_guesses = []
-    # second_array = []
-    # second_array.append(matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers][0])
-    # second_array.append(0)
-    # which_expected = 0
-    # for i in range (0, len(normalized_expected_result_matrix)):   # dla kazdego przykladu
-    #     cntr = len(normalized_expected_result_matrix[0])    # 3
-    #     for j in range (1, cntr):
-    #         if matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers + j][i] > matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers + j - 1][i]:
-    #             array_of_guesses.append(matrix_of_sigmoid_values_for_all_layers[nr_of_neurons_hidden_layers + j][i])
-    #             array_of_guesses.append(j)  # bede wiedziala czy neuron 0 czy 1 czy 2 zostal wybrany
-    #         if array_of_guesses[0] > second_array[0]:
-    #             second_array[0] = array_of_guesses[0]
-    #             second_array[1] = array_of_guesses[1]
-    #         array_of_guesses = []
-    #         if normalized_expected_result_matrix[i][j - 1] == 1:
-    #             which_expected = j
-    #         if which_expected == second_array[1]:
-    #             how_many_are_correct += 1
-    #
-    # print("how_many_are_correct:",how_many_are_correct)
+    versicolor_recall = recall(real_versicolor_recognised_as_versicolor, real_versicolor_recognised_as_setosa + real_versicolor_recognised_as_virginica)
+    versicolor_precision = precision(real_versicolor_recognised_as_versicolor, real_virginica_recognised_as_versicolor + real_setosa_recognised_as_versicolor)
+    versicolor_f2 = f2(versicolor_recall, versicolor_precision)
 
+    virginica_recall = recall(real_virginica_recognised_as_virginica, real_virginica_recognised_as_setosa + real_virginica_recognised_as_versicolor)
+    virginica_precision = precision(real_virginica_recognised_as_virginica, real_setosa_recognised_as_virginica + real_versicolor_recognised_as_virginica)
+    virginica_f2 = f2(virginica_recall, virginica_precision)
+
+    macro_f1 = (setosa_f2 + versicolor_f2 + virginica_f2) / 3
+
+    print("recall, precision, f2:")
+    print("setosa:",setosa_recall,setosa_precision,setosa_f2)
+    print("versicolor:",versicolor_recall,versicolor_precision,versicolor_f2)
+    print("virginica:",virginica_recall,virginica_precision,virginica_f2)
+    print("macro_f1:",macro_f1)
+
+
+def recall(tp, fn):
+    return tp / (tp + fn)
+
+def precision(tp, fp):
+    return tp / (tp + fp)
+
+def f2(recall, precision):
+    return 2 * (precision * recall) / (precision + recall)
 
 
 # main / user communication
