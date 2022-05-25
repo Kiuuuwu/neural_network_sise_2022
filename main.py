@@ -598,15 +598,26 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
                                'trait_2':hlp_matrix[1],
                                'trait_3':hlp_matrix[2],
                                'trait_4':hlp_matrix[3],
-                               'result':hlp_matrix_1[0]})
-            # print(df.to_string())
+                               'result_1':hlp_matrix_1[0],
+                               'result_2':hlp_matrix_1[1],
+                               'result_3':hlp_matrix_1[2]})
+            print(df.to_string())
             df_shuffled = df.sample(frac=1).reset_index(drop=True)
             shuffled_matrix = pd.DataFrame.to_numpy(df_shuffled)
 
             for j in range (0, len(shuffled_matrix)):
-                for w in range (0, len(shuffled_matrix[j]) - 1):    # bo ostatnia kolumna to dane
+                for w in range (0, len(shuffled_matrix[j]) - 3):    # bo 3 ostatnie kolumny to dane
                     normalized_data_matrix[j][w] = shuffled_matrix[j][w]
-                normalized_expected_result_matrix[j] = shuffled_matrix[j][-1]
+                print()
+                print(normalized_data_matrix[j])
+
+            for j in range (0, len(shuffled_matrix)):
+                for w in range (len(shuffled_matrix[j]) - 3, len(shuffled_matrix[j])):    # bo 3 ostatnie kolumny to dane
+                    normalized_expected_result_matrix[j][w - (len(shuffled_matrix[j]) - 3)] = shuffled_matrix[j][w]
+                print()
+                print(normalized_expected_result_matrix[j])
+
+
 
         matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer, is_bias)
         matrix_new_wages_hidden_layers, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, normalized_data_matrix, alfa, is_bias, mu, momentum_hidden_layers, momentum_output_layers)
