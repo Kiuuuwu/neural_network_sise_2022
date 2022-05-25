@@ -601,7 +601,12 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
                                'result':hlp_matrix_1[0]})
             # print(df.to_string())
             df_shuffled = df.sample(frac=1).reset_index(drop=True)
-            # print(df_shuffled.to_string())
+            shuffled_matrix = pd.DataFrame.to_numpy(df_shuffled)
+
+            for j in range (0, len(shuffled_matrix)):
+                for w in range (0, len(shuffled_matrix[j]) - 1):    # bo ostatnia kolumna to dane
+                    normalized_data_matrix[j][w] = shuffled_matrix[j][w]
+                normalized_expected_result_matrix[j] = shuffled_matrix[j][-1]
 
         matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer, is_bias)
         matrix_new_wages_hidden_layers, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, normalized_data_matrix, alfa, is_bias, mu, momentum_hidden_layers, momentum_output_layers)
@@ -756,12 +761,18 @@ def confusion_matrix(normalized_expected_result_matrix, matrix_of_sigmoid_values
 
 
 def recall(tp, fn):
+    if (tp + fn == 0):
+        return 0
     return tp / (tp + fn)
 
 def precision(tp, fp):
+    if (tp + fp == 0):
+        return 0
     return tp / (tp + fp)
 
 def f2(recall, precision):
+    if (precision + recall == 0):
+        return 0
     return 2 * (precision * recall) / (precision + recall)
 
 
