@@ -426,6 +426,13 @@ def write_to_file_learning(mean_errors_array, matrix_new_wages_hidden_layers, ma
     # print("len(mean_errors_array)", len(mean_errors_array), mean_errors_array[0])
     # for i in range (0, len(mean_errors_array)):
     #     print(mean_errors_array[i])
+
+    # for k in range(0, len(mean_errors_array)):
+    #     writer.writerow(mean_errors_array[k])
+
+    print("w fkcji zapisu:")
+    print(mean_errors_array)
+
     writer.writerow(mean_errors_array)
     f.close()
 
@@ -585,14 +592,14 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
             hlp_matrix = [[0 for x in range(len(normalized_data_matrix))] for y in
                           range(len(normalized_data_matrix[0]))]
             for j in range(0, len(hlp_matrix)):
-                for i in range(0, len(hlp_matrix[0])):
-                    hlp_matrix[j][i] = normalized_data_matrix[i][j]
+                for h in range(0, len(hlp_matrix[0])):
+                    hlp_matrix[j][h] = normalized_data_matrix[h][j]
 
             hlp_matrix_1 = [[0 for x in range(len(normalized_expected_result_matrix))] for y in
                           range(len(normalized_expected_result_matrix[0]))]
             for j in range(0, len(hlp_matrix_1)):
-                for i in range(0, len(hlp_matrix_1[0])):
-                    hlp_matrix_1[j][i] = normalized_expected_result_matrix[i][j]
+                for h in range(0, len(hlp_matrix_1[0])):
+                    hlp_matrix_1[j][h] = normalized_expected_result_matrix[h][j]
 
             df = pd.DataFrame({'trait_1':hlp_matrix[0],
                                'trait_2':hlp_matrix[1],
@@ -601,23 +608,17 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
                                'result_1':hlp_matrix_1[0],
                                'result_2':hlp_matrix_1[1],
                                'result_3':hlp_matrix_1[2]})
-            print(df.to_string())
+            # print(df.to_string())
             df_shuffled = df.sample(frac=1).reset_index(drop=True)
             shuffled_matrix = pd.DataFrame.to_numpy(df_shuffled)
 
             for j in range (0, len(shuffled_matrix)):
                 for w in range (0, len(shuffled_matrix[j]) - 3):    # bo 3 ostatnie kolumny to dane
                     normalized_data_matrix[j][w] = shuffled_matrix[j][w]
-                print()
-                print(normalized_data_matrix[j])
 
             for j in range (0, len(shuffled_matrix)):
                 for w in range (len(shuffled_matrix[j]) - 3, len(shuffled_matrix[j])):    # bo 3 ostatnie kolumny to dane
                     normalized_expected_result_matrix[j][w - (len(shuffled_matrix[j]) - 3)] = shuffled_matrix[j][w]
-                print()
-                print(normalized_expected_result_matrix[j])
-
-
 
         matrix_of_sums_for_all_layers, matrix_of_sigmoid_values_for_all_layers = count_neuron(normalized_data_matrix, matrix_new_wages_hidden_layers, matrix_new_wages_2_layer, is_bias)
         matrix_new_wages_hidden_layers, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_layers, matrix_of_wages_hidden_layers, matrix_wages_2_layer, matrix_of_sums_for_all_layers, normalized_data_matrix, alfa, is_bias, mu, momentum_hidden_layers, momentum_output_layers)
@@ -627,6 +628,11 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
             mean_errors_array.append(mean_error)
 
     matrix_of_sigmoid_values_for_all_layers = change_0_1_values_back_to_normal(data_matrix, matrix_of_sigmoid_values_for_all_layers)
+
+
+    # print("mean errors:")
+    # for k in range (0, mean_errors_array[0]):
+    #     print(mean_errors_array[k])
 
     print()
     print("sigmoid_values for every neuron:")
