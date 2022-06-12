@@ -200,9 +200,9 @@ def error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_la
         for i in range(0, h):  # sie dzieje dla wszystkich przykladow
             matrix_of_errors[j][i] = matrix_of_sigmoid_values_for_all_layers[-1][j][i] - \
                                      normalized_expected_result_matrix[i][j]
-            print("warstwa wyjsciowa:", matrix_of_errors[j][i], "=", matrix_of_sigmoid_values_for_all_layers[-1][j][i], "-", normalized_expected_result_matrix[i][j])
+            # print("warstwa wyjsciowa:", matrix_of_errors[j][i], "=", matrix_of_sigmoid_values_for_all_layers[-1][j][i], "-", normalized_expected_result_matrix[i][j])
 
-    print("matrix_of_errors:",matrix_of_errors[0])
+    # print("matrix_of_errors:",matrix_of_errors[0])
     matrix_of_all_errors[-1] = matrix_of_errors
     # print("matrix_of_all_errors[-1]",matrix_of_all_errors[-1])
 
@@ -213,22 +213,40 @@ def error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_la
 
     # print("len(matrix_of_wages_hidden_layers[-1]) czyliliczba neuronow w ostatniej ukrytej:",len(matrix_of_wages_hidden_layers[-1]))
     # print("len(matrix_wages_2_layer) czyli liczba neuronow w warstwie wyjsciowej:", len(matrix_wages_2_layer))
+    # for j in range(0, len(matrix_of_wages_hidden_layers[-1])):  # dla wszystkich neuronow w ostatniej wastwie ukrytej
+    #     for t in range(0, len(matrix_wages_2_layer)):  # dla kazdego neuronu w warstwie wyjsciowej
+    #         for i in range(0, h):  # sie dzieje dla wszystkich przykladow
+    #             if (is_bias):
+    #                 linear_combination = matrix_wages_2_layer[t][j + 1] * matrix_of_errors[t][i]
+    #             else:
+    #                 linear_combination = matrix_wages_2_layer[t][j] * matrix_of_errors[t][i]
+    #             matrix_of_errors_last_hidden_layer[j][i] = linear_combination *  matrix_of_sigmoid_values_for_all_layers[-2][j][i] * (1 - matrix_of_sigmoid_values_for_all_layers[-2][j][i])
+    #             # print("ostatnia warstwa ukryta:",  linear_combination, "*",matrix_of_sigmoid_values_for_all_layers[-2][j][i], "* (1 -",
+    #             #       matrix_of_sigmoid_values_for_all_layers[-2][j][i],")")
+    # matrix_of_all_errors[-2] = matrix_of_errors_last_hidden_layer
+
+    # ----- ^ te rzeczy to to samo ale probuje poprawic (to na dole to to samo co na gorze)
+
+
+        # for i in range(0, h):  # sie dzieje dla wszystkich przykladow
+
     for j in range(0, len(matrix_of_wages_hidden_layers[-1])):  # dla wszystkich neuronow w ostatniej wastwie ukrytej
+        linear_combination = 0
+
         for t in range(0, len(matrix_wages_2_layer)):  # dla kazdego neuronu w warstwie wyjsciowej
-            for i in range(0, h):  # sie dzieje dla wszystkich przykladow
+            linear_combination = 0
+            for i in range(0, len(matrix_wages_2_layer)):  # dla kazdego neuronu w warstwie wyjsciowej
                 if (is_bias):
-                    linear_combination = matrix_wages_2_layer[t][j + 1] * matrix_of_errors[t][i]
+                    linear_combination += matrix_wages_2_layer[i][j + 1] * matrix_of_errors[t][i]
                 else:
-                    linear_combination = matrix_wages_2_layer[t][j] * matrix_of_errors[t][i]
-                matrix_of_errors_last_hidden_layer[j][i] = linear_combination * \
-                                                           matrix_of_sigmoid_values_for_all_layers[-2][j][i] * (1 -
-                                                                                                                matrix_of_sigmoid_values_for_all_layers[
-                                                                                                                    -2][
-                                                                                                                    j][
-                                                                                                                    i])
-                print("ostatnia warstwa ukryta:",  linear_combination, "*",matrix_of_sigmoid_values_for_all_layers[-2][j][i], "* (1 -",
-                      matrix_of_sigmoid_values_for_all_layers[-2][j][i],")")
+                    linear_combination += matrix_wages_2_layer[i][j] * matrix_of_errors[t][i]
+                    # print(j,t,i,":",linear_combination, "=", matrix_wages_2_layer[i][j], "*", matrix_of_errors[t][i])
+            matrix_of_errors_last_hidden_layer[j][t] = linear_combination *  matrix_of_sigmoid_values_for_all_layers[-2][j][i] * (1 - matrix_of_sigmoid_values_for_all_layers[-2][j][i])
+            # print("ostatnia warstwa ukryta:",  linear_combination, "*",matrix_of_sigmoid_values_for_all_layers[-2][j][i], "* (1 -",
+            #       matrix_of_sigmoid_values_for_all_layers[-2][j][i],")")
     matrix_of_all_errors[-2] = matrix_of_errors_last_hidden_layer
+
+
 
     for k in range(len(matrix_of_wages_hidden_layers) - 2, -1, -1):  # dla kazdej warstwy ukrytej poza pierwsza
 
@@ -249,8 +267,8 @@ def error(normalized_expected_result_matrix, matrix_of_sigmoid_values_for_all_la
                 matrix_of_errors_hidden_layers[j][i] = linear_combination * \
                                                        matrix_of_sigmoid_values_for_all_layers[k][j][i] * (
                                                                1 - matrix_of_sigmoid_values_for_all_layers[k][j][i])
-                print("reszta wartsw wyjsciowych:",  linear_combination, "*",matrix_of_sigmoid_values_for_all_layers[k][j][i], "* (1 -",
-                      matrix_of_sigmoid_values_for_all_layers[k][j][i],")")
+                # print("reszta wartsw wyjsciowych:",  linear_combination, "*",matrix_of_sigmoid_values_for_all_layers[k][j][i], "* (1 -",
+                #       matrix_of_sigmoid_values_for_all_layers[k][j][i],")")
         matrix_of_all_errors[k] = matrix_of_errors_hidden_layers
 
     print()
@@ -627,7 +645,7 @@ def read_wages_from_file(filename):
 
     return matric_3d_part1
 
-def elo_bec():
+def to_test_mlp_for_fixed_values():
     # dane i wagi z przykaldu rozpisanego na kartce tylko po to zeby sprawdzic czy program dziala
     # fixed_wages_matrix_1 = [[[0.5, 0.25, 1, 0],[0, 0.25, 0, 1]]]
     fixed_wages_matrix_1 = [[[0.25, 1, 0, 0.5],[0.25, 0, 1, 0]]]
@@ -646,11 +664,11 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
     # skleja ze soba funkcje do nauki
 
     # CZESC DO TESTOW: -------------------------------------------------------------------------------------------------------------------------------
-    # normalized_data_matrix, fixed_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer = elo_bec()
+    # normalized_data_matrix, fixed_expected_result_matrix, matrix_of_wages_hidden_layers, matrix_wages_2_layer = to_test_mlp_for_fixed_values()
     # # normalized_data_matrix = change_input_to_0_1_values(normalized_data_matrix)
     # # normalized_expected_result_matrix = change_input_to_0_1_values(fixed_expected_result_matrix)
     # alfa = 0.5
-    # nr_of_iterations = 1
+    # nr_of_iterations = 2
     # is_bias = False
     # is_shuffle = 1
     # mu = 0.0
@@ -658,8 +676,8 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
     # nr_of_neurons_hidden_layer = 2
     # normalized_expected_result_matrix = copy.deepcopy(fixed_expected_result_matrix)
     # ------------------------------------------------------------------------------------------------------------------------------------------------
-    number = len(normalized_expected_result_matrix)
-
+    number = len(normalized_expected_result_matrix[0])
+    print("number:", number)
     if (variant == 2):
         fixed_data_matrix, fixed_expected_result_matrix = for_autoencoder_data()
         normalized_data_matrix = change_input_to_0_1_values(fixed_data_matrix)
@@ -728,13 +746,13 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
                 # print(shuffled_matrix)
 
                 for j in range(0, len(shuffled_matrix)):
-                    for w in range(0, len(shuffled_matrix[j]) - 3):  # bo 3 ostatnie kolumny to dane
+                    for w in range(0, len(shuffled_matrix[j]) - number):  # bo 3 ostatnie kolumny to dane
                         normalized_data_matrix[j][w] = shuffled_matrix[j][w]
 
                 for j in range(0, len(shuffled_matrix)):
-                    for w in range(len(shuffled_matrix[j]) - 3,
+                    for w in range(len(shuffled_matrix[j]) - number,
                                    len(shuffled_matrix[j])):  # bo 3 ostatnie kolumny to dane
-                        normalized_expected_result_matrix[j][w - (len(shuffled_matrix[j]) - 3)] = shuffled_matrix[j][w]
+                        normalized_expected_result_matrix[j][w - (len(shuffled_matrix[j]) - number)] = shuffled_matrix[j][w]
 
             if (variant == 2):
                 # print("shuffle:")
@@ -752,14 +770,14 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
                 # print(shuffled_matrix)
 
                 for j in range(0, len(shuffled_matrix)):
-                    for w in range(0, len(shuffled_matrix[j]) - 4):  # bo 4 ostatnie kolumny to dane
+                    for w in range(0, len(shuffled_matrix[j]) - number):  # bo 4 ostatnie kolumny to dane
                         normalized_data_matrix[j][w] = shuffled_matrix[j][w]
                     # print(normalized_data_matrix[j])
 
                 for j in range(0, len(shuffled_matrix)):
-                    for w in range(len(shuffled_matrix[j]) - 4,
+                    for w in range(len(shuffled_matrix[j]) - number,
                                    len(shuffled_matrix[j])):  # bo 4 ostatnie kolumny to dane
-                        normalized_expected_result_matrix[j][w - (len(shuffled_matrix[j]) - 4)] = \
+                        normalized_expected_result_matrix[j][w - (len(shuffled_matrix[j]) - number)] = \
                             shuffled_matrix[j][w]
                     # print(normalized_expected_result_matrix[j])
 
@@ -783,8 +801,9 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
         print()
         print("matrix_new_wages_2_layer before:")
         for j in range(0, len(matrix_new_wages_2_layer)):
-            for i in range(0, len(matrix_new_wages_2_layer[j])):
-                print(matrix_new_wages_2_layer[j][i])
+            print(matrix_new_wages_2_layer[j])
+            # for i in range(0, len(matrix_new_wages_2_layer[j])):
+                # print(matrix_new_wages_2_layer[j][i])
 
         matrix_new_wages_hidden_layers, matrix_new_wages_2_layer = back_propagation(normalized_expected_result_matrix,
                                                                                     matrix_of_sigmoid_values_for_all_layers,
@@ -816,7 +835,9 @@ def learning(normalized_data_matrix, matrix_of_wages_hidden_layers, matrix_wages
         mean_errors_array.append(mean_error)
         # mean_errors_array.append(mean_error)
 
+    f, ax = plt.subplots(1)
     plt.plot(mean_errors_array)
+    ax.set_ylim(ymin=0)
     plt.show()
 
     # matrix_of_sigmoid_values_for_all_layers = change_0_1_values_back_to_normal(data_matrix, matrix_of_sigmoid_values_for_all_layers)
